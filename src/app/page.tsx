@@ -13,20 +13,16 @@ const supabase = createClient(
 export default function Home() {
   const [realtimePrice, setRealtimePrice] = useState(0);
 
-  // 1. Get initial data using tRPC
   const { data: initialPrice } = api.auction.getPrice.useQuery();
 
-  // 2. Setup the "Bid Button" action
   const placeBidMutation = api.auction.placeBid.useMutation({
     onSuccess: () => console.log("Bid sent!"),
   });
 
-  // Sync initial data when it loads
   useEffect(() => {
     if (initialPrice) setRealtimePrice(initialPrice);
   }, [initialPrice]);
 
-  // 3. LISTEN FOR REALTIME UPDATES (The Magic Part)
   useEffect(() => {
     console.log("Listening for updates...");
     const channel = supabase
@@ -34,7 +30,7 @@ export default function Home() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'auctions' },
         (payload) => {
           console.log("Change received!", payload);
-          // @ts-ignore
+
           setRealtimePrice(payload.new.current_price);
         })
       .subscribe();
